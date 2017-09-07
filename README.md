@@ -4,7 +4,8 @@
 
 ## Article List
 
-![root 对象初始化](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/1)
+[root 对象初始化](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/1)
+[underscore 中的变量缓存与继承](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/2)
 
 ## Licence
 MIT License
