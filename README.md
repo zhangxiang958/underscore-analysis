@@ -5,7 +5,14 @@
 ## Article List
 
 [root 对象初始化](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/1)
+
 [underscore 中的变量缓存与继承](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/2)
+
+[硬绑定代码性能优化](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/3)
+
+[解读 cb 函数](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/4)
+
+[模拟 ES6 rest 运算符](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/5)
 
 ## Licence
 MIT License
