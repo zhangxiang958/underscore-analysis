@@ -2,6 +2,10 @@
 
 希望通过阅读 underscore 这一工具库的源码，巩固自己的 javascript 功力，如果觉得我写得好， 欢迎给我一个 star。你的关注是我持续写作的最大动力。
 
+## Source Code
+
+[添加注释的 underscore 源码 -- 1.8.3](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/blob/master/underscore-1.8.3/underscore.js)
+
 ## Article List
 
 [root 对象初始化](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/1)
