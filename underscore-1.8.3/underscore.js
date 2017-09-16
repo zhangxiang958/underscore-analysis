@@ -377,6 +377,11 @@
 
   // Determine if the array or object contains a given item (using `===`).
   // Aliased as `includes` and `include`.
+  // 看集合中是否包含特定那个值. _.values 函数就是通过先获取对象的 key 数组(_.keys) ,然后遍历对象, 将对应键值放到数组中然后返回. 
+  // 然后看 indexOf 有没有找到列表有有对应的项.
+  // indexOf 内部也比较有意思, 我已经在源码中注释了, 这里总得来说就是如果 fromIndex 传的是数字, 那么就从 fromIndex 开始查找. 如果传的是 true, 那么就说明是排序数组, 将采用二分查找来
+  // 查找数组.
+  // 如果没有传 fromIndex 或者 fromIndex 不需要特殊处理(true 与数字需要特殊处理), 那么就用 === 来做判断
   _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
     if (!isArrayLike(obj)) obj = _.values(obj);
     if (typeof fromIndex != 'number' || guard) fromIndex = 0;
@@ -384,50 +389,70 @@
   };
 
   // Invoke a method (with arguments) on every item in a collection.
+  // 使传入的集合执行对应的方法, 并返回一个处理后的数组, 你可以将 invoke 方法看作是一个特殊用的 map 方法
   _.invoke = restArgs(function(obj, path, args) {
     var contextPath, func;
     if (_.isFunction(path)) {
+      // 如果 path 传入一个函数
       func = path;
     } else if (_.isArray(path)) {
+      // 如果 path 是一个数组
+      //contextPath 取数组的除最后一个元素外的元素组成的数组(slice 不会影响原数组)
       contextPath = path.slice(0, -1);
+      // path 取原数组最后一个元素
       path = path[path.length - 1];
     }
     return _.map(obj, function(context) {
       var method = func;
+      // 如果 method 为空
       if (!method) {
+        // 如果有 contextPath
         if (contextPath && contextPath.length) {
+          // 取 path 数组中最后一个键名对应的 context, 利用这个 context ( path 属性)来做处理而不是整个 context
           context = deepGet(context, contextPath);
         }
         if (context == null) return void 0;
+        // 这句代码花了一点时间来读, 这里的 path 可以传字符串, 就是因为考虑到 item 可能是原生对象或者数组, 那么通过方括号就可以获取原生方法了
+        // 例如: _.invoke([[5, 1, 7], [3, 2, 1]], 'sort'); 调用了数组的 sort 方法
         method = context[path];
       }
+      // 如果 method 没有赋值, 那么返回空
+      // 如果有则返回 method 函数执行结果
       return method == null ? method : method.apply(context, args);
     });
   });
 
   // Convenience version of a common use case of `map`: fetching a property.
+  // pluck 是 map 的简化版, 也就是将数组中对应的键名的值取出来放到一个数组中.
   _.pluck = function(obj, key) {
     return _.map(obj, _.property(key));
   };
 
   // Convenience version of a common use case of `filter`: selecting only objects
   // containing specific `key:value` pairs.
+  // where 是 filter 的特殊用法, 回调使用的是 _.matcher, 筛选出包含 attr 的对象.
   _.where = function(obj, attrs) {
     return _.filter(obj, _.matcher(attrs));
   };
 
   // Convenience version of a common use case of `find`: getting the first object
   // containing specific `key:value` pairs.
+  // find 的特殊用法, 找到 obj 中第一个包含 attr 的对象. 试想一下如果列表中的 item 是对象, 那么你需要很多步骤例如遍历等等, findWhere 明显提供了一个简单的 API.
   _.findWhere = function(obj, attrs) {
     return _.find(obj, _.matcher(attrs));
   };
 
   // Return the maximum element (or element-based computation).
+  // 返回最大值
   _.max = function(obj, iteratee, context) {
+    // 先记录最后 result 为最小值
     var result = -Infinity, lastComputed = -Infinity,
         value, computed;
+    // 如果缺失回调函数或者 iteratee 是一个数字并且 obj 列表不是一个对象集合
     if (iteratee == null || (typeof iteratee == 'number' && typeof obj[0] != 'object') && obj != null) {
+      // 获取 obj 中的值的集合
       obj = isArrayLike(obj) ? obj : _.values(obj);
+      //遍历进行比较
       for (var i = 0, length = obj.length; i < length; i++) {
         value = obj[i];
         if (value != null && value > result) {
@@ -435,10 +460,15 @@
         }
       }
     } else {
+      //如果没有缺失回调, 先对回调函数进行优化包装
       iteratee = cb(iteratee, context);
+      //遍历 obj
       _.each(obj, function(v, index, list) {
+        // 使用 computed 缓存起 return 的值
         computed = iteratee(v, index, list);
+        //如果 computed 值比 lastComputed 大, 那么 computed 就是较大值, 进行替换
         if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
+          // 这里用 result 是因为 item 不一定是数字类型, 可能是对象, 只是使用对象中的某个属性值进行比较大小
           result = v;
           lastComputed = computed;
         }
@@ -448,9 +478,12 @@
   };
 
   // Return the minimum element (or element-based computation).
+  // 返回最小值
   _.min = function(obj, iteratee, context) {
+    // 先记录最后 result 为最大值
     var result = Infinity, lastComputed = Infinity,
         value, computed;
+    
     if (iteratee == null || (typeof iteratee == 'number' && typeof obj[0] != 'object') && obj != null) {
       obj = isArrayLike(obj) ? obj : _.values(obj);
       for (var i = 0, length = obj.length; i < length; i++) {
@@ -460,10 +493,14 @@
         }
       }
     } else {
+      //如果没有缺失回调, 先对回调函数进行优化包装
       iteratee = cb(iteratee, context);
       _.each(obj, function(v, index, list) {
+        // 使用 computed 缓存起 return 的值
         computed = iteratee(v, index, list);
+        //如果 computed 值比 lastComputed 大, 那么 computed 就是较大值, 进行替换
         if (computed < lastComputed || computed === Infinity && result === Infinity) {
+          // 这里用 result 是因为 item 不一定是数字类型, 可能是对象, 只是使用对象中的某个属性值进行比较大小
           result = v;
           lastComputed = computed;
         }
@@ -742,20 +779,29 @@
   };
 
   // Generator function to create the findIndex and findLastIndex functions.
+  // 生成 findIndex 和 findLastIndex 两个方法的核心函数
+  // 通过 dir 来达到 for 循环的时候的方向选择.
   var createPredicateIndexFinder = function(dir) {
     return function(array, predicate, context) {
+      // 优化与生成包装回调函数
       predicate = cb(predicate, context);
+      // 获取元素 length 属性
       var length = getLength(array);
+      // 选择开始遍历的下标
       var index = dir > 0 ? 0 : length - 1;
       for (; index >= 0 && index < length; index += dir) {
+        // 找到立刻返回, 不会继续遍历下面的列表
         if (predicate(array[index], index, array)) return index;
       }
+      //没有找到返回 -1
       return -1;
     };
   };
 
   // Returns the first index on an array-like that passes a predicate test.
+  // 从左边开始寻找下标
   _.findIndex = createPredicateIndexFinder(1);
+  // 从右边开始寻找下标
   _.findLastIndex = createPredicateIndexFinder(-1);
 
   // Use a comparator function to figure out the smallest index at which
@@ -772,23 +818,37 @@
   };
 
   // Generator function to create the indexOf and lastIndexOf functions.
+  // 生成 indexOf 和 lastIndexOf 的核心方法
   var createIndexFinder = function(dir, predicateFind, sortedIndex) {
     return function(array, item, idx) {
+      // 先获取输入进来的 array 的 length 属性
       var i = 0, length = getLength(array);
+      // 像 _.indexOf 文档中说, 如果第三个参数传的是数字, 那么说明需要完成的是从第几个开始找
       if (typeof idx == 'number') {
+        // 从左边开始
         if (dir > 0) {
+          // 如果 idx 大于 0 , 则使用 idx, 不是则从后面开始算
           i = idx >= 0 ? idx : Math.max(idx + length, i);
         } else {
+        //从右边开始
           length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
         }
       } else if (sortedIndex && idx && length) {
+        // 如果有传入排序函数而且 idx 是 true, length 大于 0
+        // 如果 idx 传的是 true, 说明传入的数组是一个已经排序的数组, 那么 indexOf 在查找 index 的时候就会使用二分查找来加快查询速度
         idx = sortedIndex(array, item);
+        // 然后如果找到那么就返回 idx, 如果没有则返回 -1
         return array[idx] === item ? idx : -1;
       }
+      // 如果 item 不是数字, 而是 NaN( NaN 不和任何数相等, 包括自己)
       if (item !== item) {
+        // 使用 predicateFind 来查找下标.也就是 findIndex 或者 findLastIndex 函数
+        // 使用的回调是 _.isNaN , 如果遍历 array 从 i 开始得到的数组中有 NaN 的, 那么就会返回对应的下标, 如果没有则为 -1；
         idx = predicateFind(slice.call(array, i, length), _.isNaN);
+        // 注意返回的 idx 要加 i, 因为是从 i 开始寻找的.
         return idx >= 0 ? idx + i : -1;
       }
+      // 如果上述情况都没有, 那么属于普通的查找情况, 那么就遍历然后通过 === 判断值是否相等.
       for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
         if (array[idx] === item) return idx;
       }
@@ -800,6 +860,8 @@
   // or -1 if the item is not included in the array.
   // If the array is large and already in sort order, pass `true`
   // for **isSorted** to use binary search.
+  // 同样地, 通过 dir 为 1 和 -1 在 for 循环中表示方向
+  // _.sortedIndex 如果传入 true 表示 array 已排序, 那么将使用二分查找来寻找.
   _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
   _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
 
