@@ -18,6 +18,8 @@
 
 [模拟 ES6 rest 运算符](https://github.com/zhangxiang958/underscore-sourcecodeAnalysis/issues/5)
 
+[Javascript 中的数据类型判断](https://github.com/zhangxiang958/underscore-analysis/issues/6)
+
 ## Licence
 MIT License
 
